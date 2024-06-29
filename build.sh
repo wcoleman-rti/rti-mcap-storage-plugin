@@ -5,6 +5,8 @@ script="${BASH_SOURCE[0]}"
 script_dir=`dirname "$script"`
 script_dir=`realpath "$script_dir"`
 
+${script_dir}/init.sh
+
 cd "$script_dir"
 mkdir -p build
 

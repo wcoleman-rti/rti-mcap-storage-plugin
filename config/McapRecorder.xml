@@ -32,7 +32,7 @@
                     <value>
                         <element>
                             <name>mcap_filepath</name>
-                            <value>myRecording.mcap</value>
+                            <value>data/myRecording.mcap</value>
                             <propagate>0</propagate>
                         </element>
                         <element>

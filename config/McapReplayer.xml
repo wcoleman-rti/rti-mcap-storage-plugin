@@ -12,18 +12,6 @@
 <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="https://community.rti.com/schema/6.1.2/rti_replay_service.xsd">
 
-    <!-- <types>
-        <struct name="NddsPingData">
-            <member name="number" type="int32" />
-        </struct>
-        <struct name= "StreamInfoType">
-            <member name="disposed" type="boolean"/>
-            <member name="topic_name" stringMaxLength="512" type="string"/>
-            <member name="type_name" stringMaxLength="512" type="string"/>
-            <member name="typecode_buffer" sequenceMaxLength="1024" type="char8"/>
-        </struct>
-    </types> -->
-
     <!-- The name of the library, and the function used to create an instance
          of the StorageWriter -->
     <plugin_library name="StorageLibrary">
@@ -42,7 +30,7 @@
                     <value>
                         <element>
                             <name>mcap_filepath</name>
-                            <value>myRecording.mcap</value>
+                            <value>data/myRecording.mcap</value>
                             <propagate>0</propagate>
                         </element>
                     </value>
@@ -72,11 +60,6 @@
         </domain_participant>
 
         <session name="Session">
-            <!-- Use only the topic and type this example expects -->
-            <!-- <topic name="PingTopic" participant_ref="Domain0">
-                <registered_type_name>PingType</registered_type_name>
-                <publish_with_original_info>true</publish_with_original_info>
-            </topic> -->
             <topic_group name="AllTopics" participant_ref="Domain0">
                 <allow_topic_name_filter>*</allow_topic_name_filter>
                 <deny_topic_name_filter>rti/*</deny_topic_name_filter>
