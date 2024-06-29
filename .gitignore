@@ -1,0 +1,10 @@
+.vscode/*
+.idea/
+/**/build
+/**/cmake-build-*
+*.code-workspace
+**/__pycache__
+**/.pytest_cache
+**/__init__.py
+
+data/*
