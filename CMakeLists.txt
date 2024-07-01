@@ -12,13 +12,22 @@
 cmake_minimum_required(VERSION 3.11)
 project(McapStoragePlugin)
 
-# # Find MCAP
-# find_package(
-#     mcap
-#     REQUIRED
-# )
+
+# update git submodules
+execute_process(
+    COMMAND git submodule update --init --recursive
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE error
+)
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "Script failed with error: ${error}")
+else()
+    message(STATUS "git submodule update: ${output}")
+endif()
 
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mcap_vendor")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mcap_implementation")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/plugin")

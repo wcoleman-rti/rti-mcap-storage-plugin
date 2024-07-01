@@ -34,7 +34,7 @@ endif()
 
 # Find RTI Connext dependencies
 list(APPEND CMAKE_MODULE_PATH
-    "$ENV{NDDSHOME}/resource/cmake",
+    "$ENV{NDDSHOME}/resource/cmake"
     "${CMAKE_SOURCE_DIR}/resources/cmake"
 )
 find_package(
@@ -145,3 +145,11 @@ target_compile_features(
     PRIVATE
         cxx_std_17
 )
+target_compile_options(
+    McapWriter
+    PUBLIC
+      -Wall -Wextra -Wpedantic -fPIC
+)
+
+
+# install
