@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-project(mcap_implementation)
+project(McapImpl)
 
 # mcap writer implementation
 add_library(
     McapWriter
-    OBJECT
+    STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mcap/writer_impl.cxx"
 )
 target_link_libraries(
@@ -20,7 +20,7 @@ target_include_directories(
 # mcap reader implementation
 add_library(
     McapReader
-    OBJECT
+    STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/mcap/reader_impl.cxx"
 )
 target_link_libraries(

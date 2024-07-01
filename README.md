@@ -13,9 +13,11 @@ This plugin uses the [RTI Recording Service Storage API](https://community.rti.c
 ## Building
 
 ```shell
+source <path/to/connext/installation>/resource/scripts/rtisetenv_<architecture>.bash
+
 mkdir build
 cd build
-cmake -DBUILD_SHARED_LIBS=ON [-DCMAKE_BUILD_TYPE=RELEASE] [-DCMAKE_BUILD_TYPE=DEBUG] ..
+cmake ..
 cmake --build .
 ```
 

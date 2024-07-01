@@ -3,11 +3,11 @@
 
 namespace rti::recording::storage::mcap_plugin::type {
 
-    inline const std::string fq_xml(std::string content) {
+    const std::string fq_xml(std::string content) {
         return "<dds><types>" + content + "</types></dds>";
     }
 
-    inline const std::string uri_string_profile(std::string content) {
+    const std::string uri_string_profile(std::string content) {
         return "str://\"" + content + "\"";
     }
 

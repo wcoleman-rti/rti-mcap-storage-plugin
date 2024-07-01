@@ -13,7 +13,7 @@ namespace rti::recording::storage::mcap_plugin::data {
         return dds::core::Time(secs, nanosecs);
     }
 
-    inline mcap::Timestamp convert_timestamp(dds::core::Time timestamp) {
+    mcap::Timestamp convert_timestamp(dds::core::Time timestamp) {
         return rti::recording::storage::mcap_plugin::util::safe_cast<mcap::Timestamp>(timestamp.to_nanosecs());
     }
 

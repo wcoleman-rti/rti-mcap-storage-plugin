@@ -12,20 +12,14 @@
 cmake_minimum_required(VERSION 3.11)
 project(McapStoragePlugin)
 
-if(NOT BUILD_SHARED_LIBS)
-    set(msg
-        "Static linking is not supported for this example. You can build it "
-        "using the -DBUILD_SHARED_LIBS=ON CMake parameter")
-    message(FATAL_ERROR ${msg})
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
+  if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+    set(msg "Defaulting CMAKE_BUILD_TYPE to Release")
+    message(WARNING ${msg})
+  endif()
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(msg
-        "Not specifying CMAKE_BUILD_TYPE can lead to undefined behaviour and "
-        "is not supported for this example. Please provide a valid value for "
-        "the CMAKE_BUILD_TYPE parameter")
-    message(FATAL_ERROR ${msg})
-endif()
 set(CMAKE_DEBUG_POSTFIX d)
 
 if(NOT DEFINED ENV{NDDSHOME})
@@ -46,7 +40,7 @@ find_package(
         recording_service
 )
 
-# Object library: StreamInfoType
+# Object library: SampleInfoType
 #   Contains definitions and methods for (de)serializing DDS SampleInfo
 
 # Run Codegen to generate the source code files for the types
@@ -56,37 +50,37 @@ connextdds_rtiddsgen_run(
         "$ENV{NDDSHOME}/resource/idl/dds_rtf2_dcps.idl"
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/include/rti/recording/storage/mcap_plugin/common/idl"
-    VAR "StreamInfoType"
+    VAR "SampleInfoType"
     LANG C++11
     EXTRA_ARGS -verbosity 1
 )
 
 add_library(
-    StreamInfoType
-    OBJECT
-    ${StreamInfoType_CXX11_GENERATED_SOURCES}
+    SampleInfoType
+    STATIC
+    ${SampleInfoType_CXX11_GENERATED_SOURCES}
 )
 
 target_link_libraries(
-    StreamInfoType
+    SampleInfoType
     RTIConnextDDS::cpp2_api
     ${CONNEXTDDS_EXTERNAL_LIBS}
 )
 
 target_include_directories(
-    StreamInfoType
+    SampleInfoType
     PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
 )
 
 target_compile_features(
-    StreamInfoType
+    SampleInfoType
     PRIVATE
         cxx_std_17
 )
 
 target_compile_options(
-    StreamInfoType
+    SampleInfoType
     PUBLIC
       -Wall -Wextra -Wpedantic -fPIC
 )
@@ -96,20 +90,15 @@ target_compile_options(
 #   E.g.: (de)serialization, raw buffer format conversion, timestamp conversion
 add_library(
     McapStorageCommon
-    OBJECT
+    STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/type.cxx"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/info.cxx"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/data.cxx"
 )
 
-target_sources(
-    McapStorageCommon
-    INTERFACE
-    $<TARGET_OBJECTS:StreamInfoType>
-)
-
 target_link_libraries(
     McapStorageCommon
+    SampleInfoType
     RTIConnextDDS::routing_service_infrastructure
     RTIConnextDDS::cpp2_api
     ${CONNEXTDDS_EXTERNAL_LIBS}
@@ -121,7 +110,6 @@ target_include_directories(
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     "$<BUILD_INTERFACE:$<TARGET_PROPERTY:McapReader,INTERFACE_INCLUDE_DIRECTORIES>>"
     "$<BUILD_INTERFACE:$<TARGET_PROPERTY:McapWriter,INTERFACE_INCLUDE_DIRECTORIES>>"
-    "$<BUILD_INTERFACE:$<TARGET_PROPERTY:StreamInfoType,INTERFACE_INCLUDE_DIRECTORIES>>"
 )
 
 target_compile_features(
