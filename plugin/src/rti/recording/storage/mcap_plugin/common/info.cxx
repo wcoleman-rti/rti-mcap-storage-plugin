@@ -54,7 +54,7 @@ namespace rti::recording::storage::mcap_plugin::info {
         info_sample.original_publication_virtual_sequence_number().low(native_info.original_publication_virtual_sequence_number.low);
 
         return info_sample;
-    };
+    }
 
     dds::sub::SampleInfo from_info_sample(const InfoType & info_sample) {
         DDS_SampleInfo native_info = DDS_SAMPLEINFO_DEFAULT;
@@ -112,7 +112,7 @@ namespace rti::recording::storage::mcap_plugin::info {
         dds::sub::SampleInfo info;
         info->native(native_info);
         return info;
-    };
+    }
 
     bool info_to_mcap(const dds::sub::SampleInfo & info, mcap::Message & mcap_message) {
         const auto & dds_sample = to_info_sample(info);
@@ -150,7 +150,7 @@ namespace rti::recording::storage::mcap_plugin::info {
         mcap_message.logTime = rti::recording::storage::mcap_plugin::data::convert_timestamp(info->reception_timestamp());
 
         return true;
-    };
+    }
 
     bool mcap_to_info(const mcap::Message & mcap_message, dds::sub::SampleInfo & info) {
 
@@ -169,6 +169,6 @@ namespace rti::recording::storage::mcap_plugin::info {
 
         info = from_info_sample(info_sample);
         return true;
-    };
+    }
 
-};  // rti::recording::storage::mcap_plugin::info
+}  // rti::recording::storage::mcap_plugin::info

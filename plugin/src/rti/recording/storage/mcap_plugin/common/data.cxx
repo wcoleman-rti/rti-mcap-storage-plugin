@@ -11,33 +11,33 @@ namespace rti::recording::storage::mcap_plugin::data {
         uint32_t nanosecs = rti::recording::storage::mcap_plugin::util::safe_cast<uint32_t>(timestamp) 
                 % (uint32_t) NANOSECS_PER_SEC;
         return dds::core::Time(secs, nanosecs);
-    };
+    }
 
     inline mcap::Timestamp convert_timestamp(dds::core::Time timestamp) {
         return rti::recording::storage::mcap_plugin::util::safe_cast<mcap::Timestamp>(timestamp.to_nanosecs());
-    };
+    }
 
-    uint64_t convert(const std::vector<char>& input_data, std::byte*& output_data, uint64_t& output_size) {
+    uint64_t convert(const std::vector<char>& input_data, std::byte*& output_data, uint64_t& /*output_size*/) {
         uint64_t data_size = input_data.size();
         if (output_data != nullptr) {
             delete[] output_data;
         }
         output_data = new std::byte[data_size];
         // Check if output_data needs to be reallocated
-        // if (output_size < data_size) {
-        //     delete[] output_data; // Free existing memory if any
-        //     output_data = new std::byte[data_size]; // Allocate new memory
-        //     output_size = data_size; // Update output_size to reflect the new size
-        // }
+        /* if (output_size < data_size) {
+            delete[] output_data; // Free existing memory if any
+            output_data = new std::byte[data_size]; // Allocate new memory
+            output_size = data_size; // Update output_size to reflect the new size
+        } */
         std::memcpy(output_data, reinterpret_cast<const std::byte*>(input_data.data()), data_size);
         return data_size;
-    };
+    }
 
     std::vector<char> convert(const std::byte* input_data, uint64_t data_size) {
         std::vector<char> output_data(data_size);
         std::memcpy(output_data.data(), input_data, data_size);
         return output_data;
-    };
+    }
 
     // template <typename TopicType>
     // bool dds_to_mcap(const TopicType & dds_sample, const dds::sub::SampleInfo & dds_info, mcap::Message & mcap_message)
@@ -129,4 +129,4 @@ namespace rti::recording::storage::mcap_plugin::data {
         return true;
     }
 
-};  // rti::recording::storage::mcap_plugin::data
+}  // rti::recording::storage::mcap_plugin::data

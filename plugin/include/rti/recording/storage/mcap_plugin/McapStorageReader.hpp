@@ -17,7 +17,7 @@
 
 #include "rti/recording/storage/mcap_plugin/McapStreamReader.hpp"
 #include "rti/recording/storage/mcap_plugin/McapStreamInfoReader.hpp"
-#include "mcap/reader_impl.hpp"
+// #include "mcap/reader_impl.hpp"
 
 namespace rti::recording::storage::mcap_plugin {
 
@@ -26,7 +26,7 @@ namespace rti::recording::storage::mcap_plugin {
  * Convenience macro to forward-declare the C-style function that will be
  * called by RTI Recording Service to create your class.
  */
-RTI_RECORDING_STORAGE_READER_CREATE_DECL(McapStorageReader);
+RTI_RECORDING_STORAGE_READER_CREATE_DECL(McapStorageReader)
 
 /**
  * This class acts as a factory for objects of classes PluginStreamReader

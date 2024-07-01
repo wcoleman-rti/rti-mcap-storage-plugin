@@ -34,8 +34,8 @@ namespace rti::recording::storage::mcap_plugin::info {
     bool info_to_mcap(const dds::sub::SampleInfo & info, mcap::Message & mcap_message);
     bool mcap_to_info(const mcap::Message & mcap_message, dds::sub::SampleInfo & info);
 
-};  // rti::recording::storage::mcap_plugin::info
+}  // rti::recording::storage::mcap_plugin::info
 
-#include "rti/recording/storage/mcap_plugin/common/src/info.cxx"
+#include "rti/recording/storage/mcap_plugin/common/info.cxx"
 
 #endif // DDS_MCAP_STORAGE_COMMON_INFO_H

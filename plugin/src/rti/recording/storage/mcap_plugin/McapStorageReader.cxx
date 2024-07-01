@@ -2,7 +2,7 @@
 
 namespace rti::recording::storage::mcap_plugin {
 
-RTI_RECORDING_STORAGE_READER_CREATE_DEF(McapStorageReader);
+RTI_RECORDING_STORAGE_READER_CREATE_DEF(McapStorageReader)
 
 McapStorageReader::McapStorageReader(const rti::routing::PropertySet &properties)
         : rti::recording::storage::StorageReader(properties),
@@ -28,7 +28,7 @@ McapStorageReader::McapStorageReader(const rti::routing::PropertySet &properties
     // Lock mutex, quickly read messages to discover channels
     {
         auto lock = mcap_reader.lock();
-        auto callback = [](const mcap::Message& message, mcap::RecordOffset offset) {};
+        auto callback = [](const mcap::Message& , mcap::RecordOffset) {};
         mcap::ReadMessageOptions mcap_read_options;
         mcap::IndexedMessageReader indexed_reader(*mcap_reader, mcap_read_options, callback);
         while (indexed_reader.next()) {}

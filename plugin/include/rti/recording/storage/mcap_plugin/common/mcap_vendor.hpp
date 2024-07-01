@@ -52,12 +52,12 @@ namespace mcap {
     namespace channel {
         const static std::string METADATA_KEY_DDSXML_TYPE = "DDSXML_TYPE";
         const static std::string messageEncodingCdr = "cdr";
-    };  // mcap::channel
+    }  // mcap::channel
 
     namespace schema {
         const static std::string schemaEncodingOmgIdl = "omgidl";
-    };  // mcap::schema
+    }  // mcap::schema
 
-}; // mcap
+} // mcap
 
 #endif // DDS_MCAP_STORAGE_COMMON_MCAPVENDOR_H

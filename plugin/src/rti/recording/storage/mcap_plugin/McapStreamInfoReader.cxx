@@ -67,7 +67,6 @@ bool McapStreamInfoReader::finished() {
 
 void McapStreamInfoReader::reset() {
     is_finished = false;
-    mcap::ChannelId channel_id;
     
     // Lock mutex, quickly read messages to discover channels
     auto lock = mcap_reader.lock();
@@ -83,7 +82,7 @@ int64_t McapStreamInfoReader::service_start_time() {
 
     // Lock mutex, create indexed mcap reader
     auto lock = mcap_reader.lock();
-    auto callback = [&timestamp](const mcap::Message& message, mcap::RecordOffset offset) {
+    auto callback = [&timestamp](const mcap::Message& message, mcap::RecordOffset) {
         timestamp = message.logTime;};
     mcap::IndexedMessageReader indexed_reader(*mcap_reader, mcap_read_options, callback);
 
@@ -108,7 +107,7 @@ int64_t McapStreamInfoReader::service_stop_time() {
 
     // Lock mutex, create indexed mcap reader
     auto lock = mcap_reader.lock();
-    auto callback = [&timestamp](const mcap::Message& message, mcap::RecordOffset offset) {
+    auto callback = [&timestamp](const mcap::Message& message, mcap::RecordOffset) {
         timestamp = message.logTime;};
     mcap::ReadMessageOptions current_mcap_read_options(mcap_read_options);
     current_mcap_read_options.readOrder = sample_order::reverse_read_order(mcap_read_options.readOrder);

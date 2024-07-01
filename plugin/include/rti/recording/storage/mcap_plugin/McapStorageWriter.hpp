@@ -15,7 +15,6 @@
 
 #include <rti/recording/storage/StorageWriter.hpp>
 #include "rti/recording/storage/mcap_plugin/McapStreamWriter.hpp"
-// #include "mcap/writer_impl.hpp"
 
 namespace rti::recording::storage::mcap_plugin {
 
@@ -23,7 +22,7 @@ namespace rti::recording::storage::mcap_plugin {
  * Convenience macro to forward-declare the C-style function that will be
  * called by RTI Recording Service to create your class.
  */
-RTI_RECORDING_STORAGE_WRITER_CREATE_DECL(McapStorageWriter);
+RTI_RECORDING_STORAGE_WRITER_CREATE_DECL(McapStorageWriter)
 
 /*
  * This class acts as a factory for Stream Writer objects, that store data

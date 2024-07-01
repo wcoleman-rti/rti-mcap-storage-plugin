@@ -23,8 +23,8 @@ namespace rti::recording::storage::mcap_plugin::data {
     // bool mcap_to_dds(const mcap::Message & mcap_message, TopicType & dds_sample, dds::sub::SampleInfo & dds_info);
     bool mcap_to_dds(const mcap::Message & mcap_message, dds::core::xtypes::DynamicData & dds_sample, dds::sub::SampleInfo & dds_info);
 
-};  // rti::recording::storage::mcap_plugin::data
+}  // rti::recording::storage::mcap_plugin::data
 
-#include "rti/recording/storage/mcap_plugin/common/src/data.cxx"
+#include "rti/recording/storage/mcap_plugin/common/data.cxx"
 
 #endif // DDS_MCAP_STORAGE_COMMON_DATA_H

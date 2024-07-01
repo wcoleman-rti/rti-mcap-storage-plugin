@@ -47,8 +47,8 @@ public:
 
 private:
     mcap::SharedMcapWriter mcap_writer;
-    dds::core::xtypes::DynamicType type;
     std::string stream_name;
+    dds::core::xtypes::DynamicType type;
     mcap::ChannelId mcap_data_channel_id;
     mcap::ChannelId mcap_info_channel_id;
     std::unique_ptr<mcap::Message> current_message;

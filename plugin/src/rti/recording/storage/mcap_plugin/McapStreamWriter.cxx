@@ -51,7 +51,7 @@ McapStreamWriter::~McapStreamWriter() {
         delete[] current_message->data;
         current_message->data = nullptr;
     }
-};
+}
 
 void McapStreamWriter::store(
             const std::vector<dds::core::xtypes::DynamicData *> &sample_seq,

@@ -71,7 +71,7 @@ void McapStreamReader::read(
 
     // Lock mutex, create indexed mcap reader
     auto lock = mcap_reader.lock();
-    auto callback = [&current_message](const mcap::Message& message, mcap::RecordOffset offset) {
+    auto callback = [&current_message](const mcap::Message& message, mcap::RecordOffset) {
         current_message = std::make_unique<mcap::Message>(message);};
     mcap::IndexedMessageReader indexed_reader(*mcap_reader, current_mcap_read_options, callback);
 
@@ -143,7 +143,7 @@ void McapStreamReader::reset() {
     // Lock mutex, create indexed mcap reader
     auto lock = mcap_reader.lock();
     message_states.clear();
-    auto callback = [&sequence](const mcap::Message& message, mcap::RecordOffset offset) {
+    auto callback = [&sequence](const mcap::Message& message, mcap::RecordOffset) {
         sequence = message.sequence;};
     mcap::IndexedMessageReader indexed_reader(*mcap_reader, mcap_read_options, callback);
 

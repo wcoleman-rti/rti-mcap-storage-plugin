@@ -39,8 +39,8 @@ namespace rti::recording::storage::mcap_plugin::util {
         }
 
         return static_cast<TO_INT_TYPE>(new_value);
-    };
+    }
 
-};   // rti::recording::storage::mcap_plugin::util
+}   // rti::recording::storage::mcap_plugin::util
 
 #endif // DDS_MCAP_STORAGE_COMMON_UTIL_H

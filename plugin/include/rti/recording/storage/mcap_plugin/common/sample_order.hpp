@@ -55,9 +55,9 @@ namespace rti::recording::storage::mcap_plugin::sample_order {
             // TODO: log error
             throw std::runtime_error("Unsupported mcap::ReadMessageOptions::ReadOrder");
         }
-    };
+    }
 
-};  // rti::recording::storage::mcap_plugin::sample_order
+}  // rti::recording::storage::mcap_plugin::sample_order
 
 
 #endif // DDS_MCAP_STORAGE_COMMON_SAMPLEORDER_H

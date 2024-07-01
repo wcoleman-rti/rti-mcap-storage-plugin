@@ -16,8 +16,8 @@ namespace rti::recording::storage::mcap_plugin::type {
     std::unique_ptr<dds::core::xtypes::DynamicType> get_channel_type(const mcap::Channel & mcap_channel, const mcap::Schema & mcap_schema);
     void store_channel_type(mcap::Channel & mcap_channel, mcap::Schema & mcap_schema, const dds::core::xtypes::DynamicType & type);
 
-};  // rti::recording::storage::mcap_plugin::type
+}  // rti::recording::storage::mcap_plugin::type
 
-#include "rti/recording/storage/mcap_plugin/common/src/type.cxx"
+#include "rti/recording/storage/mcap_plugin/common/type.cxx"
 
 #endif // DDS_MCAP_STORAGE_COMMON_TYPE_H

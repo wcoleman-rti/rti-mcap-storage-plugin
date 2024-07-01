@@ -2,7 +2,7 @@
 
 namespace rti::recording::storage::mcap_plugin {
 
-RTI_RECORDING_STORAGE_WRITER_CREATE_DEF(McapStorageWriter);
+RTI_RECORDING_STORAGE_WRITER_CREATE_DEF(McapStorageWriter)
 
 McapStorageWriter::McapStorageWriter(const rti::routing::PropertySet &properties) 
         : rti::recording::storage::StorageWriter(properties),
@@ -60,7 +60,7 @@ McapStorageWriter::~McapStorageWriter() {
 
 rti::recording::storage::StorageStreamWriter * McapStorageWriter::create_stream_writer(
         const rti::routing::StreamInfo &stream_info,
-        const rti::routing::PropertySet &properties) {
+        const rti::routing::PropertySet &) {
     auto type = stream_info.type_info().dynamic_type();
     return new McapStreamWriter(mcap_writer, stream_info.stream_name(), type, store_sample_info);
 }
