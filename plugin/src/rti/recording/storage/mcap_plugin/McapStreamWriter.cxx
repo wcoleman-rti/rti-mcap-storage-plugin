@@ -62,7 +62,7 @@ void McapStreamWriter::store(
         const dds::sub::SampleInfo &info = *(info_seq[i]);
         if (info->valid()) {
             const dds::core::xtypes::DynamicData &sample = *(sample_seq[i]);
-            if (!data::dds_to_mcap(sample, info, *current_message)) {
+            if (!data::dds_sample_to_mcap_message(sample, info, *current_message)) {
                 // TODO: log error
             }
             current_message->channelId = mcap_data_channel_id;
@@ -74,7 +74,7 @@ void McapStreamWriter::store(
             }
         }
         else if (store_sample_info) {
-            if (!info::info_to_mcap(info, *current_message)) {
+            if (!info::dds_info_to_mcap_message(info, *current_message)) {
                 // TODO: log error
             }
             current_message->channelId = mcap_info_channel_id;

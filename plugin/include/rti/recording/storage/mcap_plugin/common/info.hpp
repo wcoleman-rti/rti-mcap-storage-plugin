@@ -5,7 +5,7 @@
 #include <dds/core/xtypes/DynamicType.hpp>
 #include <dds/sub/SampleInfo.hpp>
 #include <mcap/types.hpp>
-#include "rti/recording/storage/mcap_plugin/common/mcap_vendor.hpp"
+#include "mcap/mcap_impl.hpp"
 #include "rti/recording/storage/mcap_plugin/common/type.hpp"
 #include "rti/recording/storage/mcap_plugin/common/idl/dds_rtf2_dcps.hpp"
 
@@ -31,11 +31,11 @@ namespace rti::recording::storage::mcap_plugin::info {
     InfoType to_info_sample(const dds::sub::SampleInfo &info);
     dds::sub::SampleInfo from_info_sample(const InfoType & info_sample);
 
-    bool info_to_mcap(const dds::sub::SampleInfo & info, mcap::Message & mcap_message);
-    bool mcap_to_info(const mcap::Message & mcap_message, dds::sub::SampleInfo & info);
+    bool dds_info_to_mcap_message(const dds::sub::SampleInfo & info, mcap::Message & mcap_message);
+    bool mcap_message_to_dds_info(const mcap::Message & mcap_message, dds::sub::SampleInfo & info);
 
 }  // rti::recording::storage::mcap_plugin::info
 
-#include "rti/recording/storage/mcap_plugin/common/info.cxx"
+// #include "rti/recording/storage/mcap_plugin/common/info.cxx"
 
 #endif // DDS_MCAP_STORAGE_COMMON_INFO_H

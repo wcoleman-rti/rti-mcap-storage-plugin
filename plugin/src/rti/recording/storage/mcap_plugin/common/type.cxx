@@ -1,5 +1,5 @@
 #include "rti/recording/storage/mcap_plugin/common/type.hpp"
-#include "rti/recording/storage/mcap_plugin/common/mcap_vendor.hpp"
+#include "mcap/mcap_impl.hpp"
 
 namespace rti::recording::storage::mcap_plugin::type {
 

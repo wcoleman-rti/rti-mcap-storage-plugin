@@ -87,12 +87,12 @@ void McapStreamReader::read(
         dds::core::xtypes::DynamicData * sample = new dds::core::xtypes::DynamicData(type);
         dds::sub::SampleInfo * info = new dds::sub::SampleInfo();
         if (current_message->channelId == mcap_data_channel_id) {
-            if (!data::mcap_to_dds(*current_message, *sample, *info)) {
+            if (!data::mcap_message_to_dds_sample(*current_message, *sample, *info)) {
                 // TODO: log status
             }
         }
         else if (current_message->channelId == mcap_info_channel_id) {
-            if (!info::mcap_to_info(*current_message, *info)) {
+            if (!info::mcap_message_to_dds_info(*current_message, *info)) {
                 // TODO: log status
             }
         }        

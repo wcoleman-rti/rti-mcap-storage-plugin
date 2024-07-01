@@ -18,6 +18,6 @@ namespace rti::recording::storage::mcap_plugin::type {
 
 }  // rti::recording::storage::mcap_plugin::type
 
-#include "rti/recording/storage/mcap_plugin/common/type.cxx"
+// #include "rti/recording/storage/mcap_plugin/common/type.cxx"
 
 #endif // DDS_MCAP_STORAGE_COMMON_TYPE_H

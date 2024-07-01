@@ -114,7 +114,7 @@ namespace rti::recording::storage::mcap_plugin::info {
         return info;
     }
 
-    bool info_to_mcap(const dds::sub::SampleInfo & info, mcap::Message & mcap_message) {
+    bool dds_info_to_mcap_message(const dds::sub::SampleInfo & info, mcap::Message & mcap_message) {
         const auto & dds_sample = to_info_sample(info);
         std::vector<char> buffer;
 
@@ -145,16 +145,16 @@ namespace rti::recording::storage::mcap_plugin::info {
                 "Failed to copy cdr buffer");
         }
 
-        mcap_message.dataSize = rti::recording::storage::mcap_plugin::data::convert(buffer, const_cast<std::byte*&>(mcap_message.data), mcap_message.dataSize);
+        mcap_message.dataSize = rti::recording::storage::mcap_plugin::data::convert_buffer(buffer, const_cast<std::byte*&>(mcap_message.data), mcap_message.dataSize);
         mcap_message.publishTime = rti::recording::storage::mcap_plugin::data::convert_timestamp(info->source_timestamp());
         mcap_message.logTime = rti::recording::storage::mcap_plugin::data::convert_timestamp(info->reception_timestamp());
 
         return true;
     }
 
-    bool mcap_to_info(const mcap::Message & mcap_message, dds::sub::SampleInfo & info) {
+    bool mcap_message_to_dds_info(const mcap::Message & mcap_message, dds::sub::SampleInfo & info) {
 
-        std::vector<char> buffer = rti::recording::storage::mcap_plugin::data::convert(mcap_message.data, mcap_message.dataSize);
+        std::vector<char> buffer = rti::recording::storage::mcap_plugin::data::convert_buffer(mcap_message.data, mcap_message.dataSize);
         InfoType info_sample;
 
         // First get the length of the buffer

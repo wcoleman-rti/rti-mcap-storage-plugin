@@ -46,6 +46,9 @@ find_package(
         recording_service
 )
 
+# Object library: StreamInfoType
+#   Contains definitions and methods for (de)serializing DDS SampleInfo
+
 # Run Codegen to generate the source code files for the types
 include(ConnextDdsCodegen)
 connextdds_rtiddsgen_run(
@@ -53,7 +56,7 @@ connextdds_rtiddsgen_run(
         "$ENV{NDDSHOME}/resource/idl/dds_rtf2_dcps.idl"
     OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/include/rti/recording/storage/mcap_plugin/common/idl"
-    VAR "SampleInfo"
+    VAR "StreamInfoType"
     LANG C++11
     EXTRA_ARGS -verbosity 1
 )
@@ -61,7 +64,7 @@ connextdds_rtiddsgen_run(
 add_library(
     StreamInfoType
     OBJECT
-    ${SampleInfo_CXX11_GENERATED_SOURCES}
+    ${StreamInfoType_CXX11_GENERATED_SOURCES}
 )
 
 target_link_libraries(
@@ -70,19 +73,71 @@ target_link_libraries(
     ${CONNEXTDDS_EXTERNAL_LIBS}
 )
 
+target_include_directories(
+    StreamInfoType
+    PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
+)
+
 target_compile_features(
     StreamInfoType
     PRIVATE
         cxx_std_17
 )
 
-set_target_properties(
+target_compile_options(
     StreamInfoType
-    PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
+    PUBLIC
+      -Wall -Wextra -Wpedantic -fPIC
 )
 
-# Define the library that will provide the MCAP storage writer plugin
+# Object library: McapStorageCommon
+#   Contains common infrastructure for storage plugin
+#   E.g.: (de)serialization, raw buffer format conversion, timestamp conversion
+add_library(
+    McapStorageCommon
+    OBJECT
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/type.cxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/info.cxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/data.cxx"
+)
+
+target_sources(
+    McapStorageCommon
+    INTERFACE
+    $<TARGET_OBJECTS:StreamInfoType>
+)
+
+target_link_libraries(
+    McapStorageCommon
+    RTIConnextDDS::routing_service_infrastructure
+    RTIConnextDDS::cpp2_api
+    ${CONNEXTDDS_EXTERNAL_LIBS}
+)
+
+target_include_directories(
+    McapStorageCommon
+    PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<BUILD_INTERFACE:$<TARGET_PROPERTY:McapReader,INTERFACE_INCLUDE_DIRECTORIES>>"
+    "$<BUILD_INTERFACE:$<TARGET_PROPERTY:McapWriter,INTERFACE_INCLUDE_DIRECTORIES>>"
+    "$<BUILD_INTERFACE:$<TARGET_PROPERTY:StreamInfoType,INTERFACE_INCLUDE_DIRECTORIES>>"
+)
+
+target_compile_features(
+    McapStorageCommon
+    PUBLIC
+        cxx_std_17
+)
+
+target_compile_options(
+    McapStorageCommon
+    PUBLIC
+      -Wall -Wextra -Wpedantic -fPIC
+)
+
+# Shared library: McapStorageRecord
+#   Shared library for RTI Recording Service Storage Plugin (MCAP format)
 add_library(
     McapStorageRecord
     SHARED
@@ -91,11 +146,8 @@ add_library(
 
 target_link_libraries(
     McapStorageRecord
-    RTIConnextDDS::routing_service_infrastructure
-    RTIConnextDDS::cpp2_api
-    ${CONNEXTDDS_EXTERNAL_LIBS}
     McapWriter
-    StreamInfoType
+    McapStorageCommon
 )
 
 target_include_directories(
@@ -108,13 +160,8 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
 
-target_compile_features(
-    McapStorageRecord
-    PRIVATE
-        cxx_std_17
-)
-
-# Define the library that will provide the MCAP storage reader plugin
+# Shared library: McapStorageReplay
+#   Shared library for RTI Replay Service Storage Plugin (MCAP format)
 add_library(
     McapStorageReplay
     SHARED
@@ -123,11 +170,8 @@ add_library(
 
 target_link_libraries(
     McapStorageReplay
-    RTIConnextDDS::routing_service_infrastructure
-    RTIConnextDDS::cpp2_api
-    ${CONNEXTDDS_EXTERNAL_LIBS}
     McapReader
-    StreamInfoType
+    McapStorageCommon
 )
 
 target_include_directories(
@@ -139,17 +183,3 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
-
-target_compile_features(
-    McapStorageReplay
-    PRIVATE
-        cxx_std_17
-)
-target_compile_options(
-    McapWriter
-    PUBLIC
-      -Wall -Wextra -Wpedantic -fPIC
-)
-
-
-# install
