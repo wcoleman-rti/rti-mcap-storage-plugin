@@ -22,7 +22,7 @@ cmake --build .
 ## Installing
 
 ```shell
-cmake [--install-prefix ./lib] --install . 
+cmake --install . [--prefix ..]
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ cmake [--install-prefix ./lib] --install .
 2. If needed, set LD_LIBRARY_PATH to find the MCAP Storage Plugin libraries.
 
     ```sh
-    export LD_LIBRARY_PATH=<install_prefix/plugin>:LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=<install_prefix/lib>:LD_LIBRARY_PATH
     ```
 
 3. Run Recording Service

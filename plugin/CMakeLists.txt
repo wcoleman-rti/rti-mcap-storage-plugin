@@ -183,3 +183,12 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 )
+
+
+# Install the plugin shared libraries
+install(
+    TARGETS
+        McapStorageRecord
+        McapStorageReplay
+    LIBRARY DESTINATION lib
+)
