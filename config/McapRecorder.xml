@@ -35,11 +35,11 @@
                             <value>data/myRecording.mcap</value>
                             <propagate>0</propagate>
                         </element>
-                        <element>
+                        <!-- <element>
                             <name>store_sample_info</name>
                             <value>1</value>
                             <propagate>0</propagate>
-                        </element>
+                        </element> -->
                     </value>
                 </property>
             </plugin>
