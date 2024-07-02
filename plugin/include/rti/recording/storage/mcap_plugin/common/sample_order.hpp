@@ -30,10 +30,9 @@ namespace rti::recording::storage::mcap_plugin::sample_order {
             return SampleOrderKind::SOURCE_TIMESTAMP;
         }
         */
-        else {
-            // TODO: log error
-            throw std::runtime_error("Unsupported sample order: " + sample_order_str);
-        }
+       
+        // TODO: log error
+        throw std::runtime_error("Unsupported sample order: " + sample_order_str);
     }
 
     mcap::ReadMessageOptions::ReadOrder reverse_read_order(mcap::ReadMessageOptions::ReadOrder readOrder) {
@@ -54,6 +53,23 @@ namespace rti::recording::storage::mcap_plugin::sample_order {
         default:
             // TODO: log error
             throw std::runtime_error("Unsupported mcap::ReadMessageOptions::ReadOrder");
+        }
+    }
+
+    mcap::Timestamp get_mcap_message_timestamp(const mcap::Message & mcap_message, const SampleOrderKind & sample_order) {
+        switch (sample_order)
+        {
+        case SampleOrderKind::RECEPTION_TIMESTAMP:
+            return mcap_message.logTime;
+        /*
+        case sample_order::SampleOrderKind::SOURCE_TIMESTAMP:
+            return mcap_message.publishTime;
+            break;
+        */
+        
+        default:
+            // TODO: log error
+            throw std::runtime_error("Unsupported sample order");
         }
     }
 

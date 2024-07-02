@@ -55,8 +55,6 @@
              -domainIdBase command-line parameter to adjust -->
         <domain_participant name="Domain0">
             <domain_id>0</domain_id>
-            <register_type name="PingType" type_ref="NddsPingData"/>
-            <!-- <register_type name="StreamInfoType" type_ref="StreamInfoType"/> -->
         </domain_participant>
 
         <session name="Session">

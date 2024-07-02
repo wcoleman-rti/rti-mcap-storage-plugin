@@ -82,6 +82,7 @@ private:
     sample_order::SampleOrderKind sample_order;
     mcap::ReadMessageOptions mcap_read_options;
 
+    void reset_message_states();
 };
 
 } // namespace rti::recording::storage::mcap_plugin

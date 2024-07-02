@@ -12,34 +12,6 @@
 cmake_minimum_required(VERSION 3.11)
 project(McapStoragePlugin)
 
-if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
-  if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
-    set(msg "Defaulting CMAKE_BUILD_TYPE to Release")
-    message(WARNING ${msg})
-  endif()
-endif()
-
-set(CMAKE_DEBUG_POSTFIX d)
-
-if(NOT DEFINED ENV{NDDSHOME})
-    message(FATAL_ERROR "NDDSHOME environment variable must be set")
-endif()
-
-# Find RTI Connext dependencies
-list(APPEND CMAKE_MODULE_PATH
-    "$ENV{NDDSHOME}/resource/cmake"
-    "${CMAKE_SOURCE_DIR}/resources/cmake"
-)
-find_package(
-    RTIConnextDDS "7.3.0"
-    REQUIRED
-    COMPONENTS
-        core
-        routing_service
-        recording_service
-)
-
 # Object library: SampleInfoType
 #   Contains definitions and methods for (de)serializing DDS SampleInfo
 

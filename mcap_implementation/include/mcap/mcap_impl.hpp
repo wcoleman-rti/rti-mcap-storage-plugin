@@ -19,8 +19,12 @@ namespace mcap {
         SharedObj(const SharedObj& other) : object_(other.object_), 
                                             mutex_(other.mutex_) {}
         
-        std::shared_ptr<T> object() const {
+        std::shared_ptr<T> ptr() const {
             return object_;
+        }
+
+        void ptr(const std::shared_ptr<T> & other) {
+            object_ = other;
         }
 
         // Overload dereference operator

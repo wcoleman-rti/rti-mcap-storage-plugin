@@ -15,7 +15,7 @@ McapStorageReader::McapStorageReader(const rti::routing::PropertySet &properties
         auto mcap_filepath = property_found->second;
 
         // Lock mutex, open MCAP file
-        auto lock = mcap_reader.lock();
+        auto reader_lock = mcap_reader.lock();
         if (!mcap_reader->open(mcap_filepath).ok()) {
             // TODO: log error
             throw std::runtime_error("Failed to open MCAP file");
@@ -27,17 +27,17 @@ McapStorageReader::McapStorageReader(const rti::routing::PropertySet &properties
 
     // Lock mutex, quickly read messages to discover channels
     {
-        auto lock = mcap_reader.lock();
-        auto callback = [](const mcap::Message& , mcap::RecordOffset) {};
-        mcap::ReadMessageOptions mcap_read_options;
-        mcap::IndexedMessageReader indexed_reader(*mcap_reader, mcap_read_options, callback);
-        while (indexed_reader.next()) {}
+        auto reader_lock = mcap_reader.lock();
+        if (!mcap_reader->readSummary(mcap::ReadSummaryMethod::AllowFallbackScan).ok()) {
+            // TODO: log error
+            throw std::runtime_error("Failed to read MCAP file summary");
+        }
     }
 }
 
 McapStorageReader::~McapStorageReader() {
     // Lock mutex, close MCAP file
-    auto lock = mcap_reader.lock();
+    auto reader_lock = mcap_reader.lock();
     mcap_reader->close();
 }
 

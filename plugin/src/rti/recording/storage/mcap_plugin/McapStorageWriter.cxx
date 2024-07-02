@@ -22,7 +22,7 @@ McapStorageWriter::McapStorageWriter(const rti::routing::PropertySet &properties
         writer_options.noSummary = false;
 
         // Lock mutex, open MCAP file
-        auto lock = mcap_writer.lock();
+        auto writer_lock = mcap_writer.lock();
         if (!mcap_writer->open(mcap_filepath, writer_options).ok()) {
             // TODO: log error
         }
@@ -47,14 +47,14 @@ McapStorageWriter::McapStorageWriter(const rti::routing::PropertySet &properties
 
     if (store_sample_info) {
         // Lock mutex, add info schema
-        auto lock = mcap_writer.lock();
+        auto writer_lock = mcap_writer.lock();
         mcap_writer->addSchema(info::data_schema);
     }
 }
 
 McapStorageWriter::~McapStorageWriter() {
     // Lock mutex, close MCAP file
-    auto lock = mcap_writer.lock();
+    auto writer_lock = mcap_writer.lock();
     mcap_writer->close();
 }
 

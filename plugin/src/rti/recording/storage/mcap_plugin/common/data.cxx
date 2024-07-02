@@ -6,15 +6,19 @@
 namespace rti::recording::storage::mcap_plugin::data {
 
     dds::core::Time convert_timestamp(mcap::Timestamp timestamp) {
-        int64_t secs = rti::recording::storage::mcap_plugin::util::safe_cast<int64_t>(timestamp) 
-                / (int64_t) NANOSECS_PER_SEC;
-        uint32_t nanosecs = rti::recording::storage::mcap_plugin::util::safe_cast<uint32_t>(timestamp) 
-                % (uint32_t) NANOSECS_PER_SEC;
+        int64_t secs = rti::recording::storage::mcap_plugin::util::safe_cast<int64_t>(timestamp / NANOSECS_PER_SEC);
+        uint32_t nanosecs = rti::recording::storage::mcap_plugin::util::safe_cast<uint32_t>(timestamp % NANOSECS_PER_SEC);
         return dds::core::Time(secs, nanosecs);
     }
 
     mcap::Timestamp convert_timestamp(dds::core::Time timestamp) {
-        return rti::recording::storage::mcap_plugin::util::safe_cast<mcap::Timestamp>(timestamp.to_nanosecs());
+        uint64_t nanosecs;
+        try {
+            nanosecs = timestamp.to_nanosecs();
+        } catch (std::overflow_error & e) {
+            nanosecs = std::numeric_limits<uint64_t>::max();
+        }
+        return nanosecs;
     }
 
     uint64_t convert_buffer(const std::vector<char>& input_data, std::byte*& output_data, uint64_t& /*output_size*/) {

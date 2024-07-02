@@ -14,7 +14,7 @@ McapStreamWriter::McapStreamWriter(
           store_sample_info(store_sample_info) {
     
     // Lock mutex
-    auto lock = mcap_writer.lock();
+    auto writer_lock = mcap_writer.lock();
     
     // Data schema --> DDS topic type
     mcap::Schema data_schema;
@@ -68,7 +68,7 @@ void McapStreamWriter::store(
             current_message->channelId = mcap_data_channel_id;
 
             // Lock mutex, write data
-            auto lock = mcap_writer.lock();
+            auto writer_lock = mcap_writer.lock();
             if (!mcap_writer->write(*current_message).ok()) {
                 // TODO: log error
             }
@@ -80,7 +80,7 @@ void McapStreamWriter::store(
             current_message->channelId = mcap_info_channel_id;
 
             // Lock mutex, write data
-            auto lock = mcap_writer.lock();
+            auto writer_lock = mcap_writer.lock();
             if (!mcap_writer->write(*current_message).ok()) {
                 // TODO: log error
             }

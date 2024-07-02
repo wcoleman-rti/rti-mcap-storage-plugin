@@ -69,13 +69,24 @@ public:
 
 private:
     mcap::SharedMcapReader mcap_reader;
+    mcap::SharedObj<mcap::IndexedMessageReader> indexed_reader;
+//     std::unique_ptr<mcap::IndexedMessageReader> indexed_reader;
+    mcap::SharedObj<mcap::Message> current_message;
+    // std::unique_ptr<mcap::Message> current_message;
     dds::core::xtypes::DynamicType type;
     std::unordered_map<uint32_t, dds::sub::status::SampleState> message_states;
+    std::unordered_map<dds::core::InstanceHandle, int32_t> read_instance_map;
     bool is_finished;
     sample_order::SampleOrderKind sample_order;
     mcap::ReadMessageOptions mcap_read_options;
+    std::string data_stream_name;
+    std::string info_stream_name;
     mcap::ChannelId mcap_data_channel_id;
     mcap::ChannelId mcap_info_channel_id;
+
+    void reset_message_states();
+    void reset_indexed_reader(mcap::Timestamp min_timestamp = 0, mcap::Timestamp max_timestamp = mcap::MaxTime);
+    void queue_next_message();
 };
 
 } // namespace rti::recording::storage::mcap_plugin
