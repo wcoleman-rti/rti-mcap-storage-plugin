@@ -1,0 +1,47 @@
+
+typedef octet aliastype;
+
+struct Foo {
+    @key aliastype a;
+    boolean b;
+    octet o;
+    char c;
+    int8 i8;
+    uint8 u8;
+    int16 i16;
+    uint16 u16;
+    int32 i32;
+    uint32 u32;
+    int64 i64;
+    uint64 u64;
+    float f;
+    double d;
+};
+
+enum FooEnum {
+    A,
+    B,
+    C,
+    D
+};
+
+union FooUnion switch(FooEnum) {
+    case A:
+        int8 i8;
+    case B:
+        int16 i16;
+    case C:
+        int32 i32;
+    case D:
+        int64 i64;
+};
+
+struct FooComplex {
+    @key Foo nested_primative;
+    FooEnum enum_value;
+    string<100> bounded_string;
+    string unbounded_string;
+    sequence<octet, 100> bounded_seq;
+    sequence<octet> unbounded_seq;
+    FooUnion union_value;
+};

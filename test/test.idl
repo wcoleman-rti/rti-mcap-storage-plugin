@@ -1,0 +1,61 @@
+
+struct BasicStruct {
+    octet octet_value;
+    int32 int32_value;
+    double double_value;
+};
+
+struct PrimativeStruct {
+    char char_value;
+    wchar wchar_value;
+    octet octet_value;
+    int8 int8_value;
+    uint8 uint8_value;
+    int16 int16_value;
+    uint16 uint16_value;
+    int32 int32_value;
+    uint32 uint32_value;
+    int64 int64_value;
+    uint64 uint64_value;
+    float float_value;
+    double double_value;
+    long double longdouble_value;
+};
+
+enum TestEnum {
+    A = 0,
+    B = 1,
+    C = 2,
+    D = 3
+};
+
+const uint32 BOUNDS = 100;
+
+typedef string<BOUNDS> BoundedString;
+typedef string UnboundedString;
+typedef sequence<octet, BOUNDS> BoundedPrimativeSeq;
+typedef sequence<octet> UnboundedPrimativeSeq;
+typedef octet PrimativeArray[BOUNDS];
+
+union PrimativeUnion switch (TestEnum) {
+    case A:
+        uint8 uint8_value;
+    case B:
+        uint16 uint16_value;
+    case C:
+        uint32 uint32_value;
+    case D:
+        uint64 uint64_value;
+};
+
+struct ComplexStruct {
+    @key int32 key_value;
+    TestEnum enum_value;
+    PrimativeUnion union_value;
+    PrimativeStruct nested_struct;
+    BoundedString bounded_string;
+    UnboundedString unbounded_string;
+    BoundedPrimativeSeq bounded_seq;
+    UnboundedPrimativeSeq unbounded_seq;
+    PrimativeArray primative_array;
+};

@@ -1,6 +1,6 @@
 .vscode/*
 .idea/
-/**/build
+/**/build*
 /**/cmake-build-*
 *.code-workspace
 **/__pycache__
@@ -9,3 +9,8 @@
 
 data/*
 lib/*
+bin/*
+example/*
+config/*
+
+test/data

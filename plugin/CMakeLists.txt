@@ -10,7 +10,7 @@
 #  use or inability to use the software.
 #
 cmake_minimum_required(VERSION 3.11)
-project(McapStoragePlugin)
+project(RTIStoragePluginMcap::Src)
 
 # Object library: SampleInfoType
 #   Contains definitions and methods for (de)serializing DDS SampleInfo
@@ -21,77 +21,96 @@ connextdds_rtiddsgen_run(
     IDL_FILE
         "$ENV{NDDSHOME}/resource/idl/dds_rtf2_dcps.idl"
     OUTPUT_DIRECTORY
-        "${CMAKE_CURRENT_BINARY_DIR}/include/rti/recording/storage/mcap_plugin/common/idl"
+        ${CMAKE_CURRENT_BINARY_DIR}/idl/
+    VAR "SampleInfoIncludes"
+    LANG C++11
+    EXTRA_ARGS -verbosity 1
+)
+
+connextdds_rtiddsgen_run(
+    IDL_FILE
+        ${CMAKE_SOURCE_DIR}/resources/idl/SampleInfo.idl
+    INCLUDE_DIRS
+        "$ENV{NDDSHOME}/resource/idl/"
+    OUTPUT_DIRECTORY
+        ${CMAKE_CURRENT_BINARY_DIR}/idl/
     VAR "SampleInfoType"
     LANG C++11
     EXTRA_ARGS -verbosity 1
 )
 
 add_library(
-    SampleInfoType
+    SampleInfoTypeLib
     STATIC
+    ${SampleInfoIncludes_CXX11_GENERATED_SOURCES}
     ${SampleInfoType_CXX11_GENERATED_SOURCES}
 )
 
 target_link_libraries(
-    SampleInfoType
+    SampleInfoTypeLib
     RTIConnextDDS::cpp2_api
     ${CONNEXTDDS_EXTERNAL_LIBS}
 )
 
 target_include_directories(
-    SampleInfoType
+    SampleInfoTypeLib
     PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
 
 target_compile_features(
-    SampleInfoType
-    PRIVATE
+    SampleInfoTypeLib
+    PUBLIC
         cxx_std_17
 )
 
 target_compile_options(
-    SampleInfoType
+    SampleInfoTypeLib
     PUBLIC
       -Wall -Wextra -Wpedantic -fPIC
 )
 
-# Object library: McapStorageCommon
-#   Contains common infrastructure for storage plugin
-#   E.g.: (de)serialization, raw buffer format conversion, timestamp conversion
+# Object library: PluginCommon
+#   Common static library for both Record and Replay Plugins
+#   Includes:
+#     - Utils.cxx: Utility functions for both plugins
+#     - mcap: MCAP library
+#     - SampleInfoTypeLib: SampleInfo type definitions and methods for (de)serializing DDS SampleInfo
+#     - RTIConnextDDS::cpp2_api: RTI Connext DDS C++ API
+#     - RTIConnextDDS::routing_service_infrastructure: RTI Routing Service Infrastructure
+#     - ${CONNEXTDDS_EXTERNAL_LIBS}: External libraries required by RTI Connext DDS
+
 add_library(
-    McapStorageCommon
+    PluginCommon
     STATIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/type.cxx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/info.cxx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/common/data.cxx"
+    ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cxx
 )
 
 target_link_libraries(
-    McapStorageCommon
-    SampleInfoType
-    RTIConnextDDS::routing_service_infrastructure
-    RTIConnextDDS::cpp2_api
-    ${CONNEXTDDS_EXTERNAL_LIBS}
+    PluginCommon
+        mcap
+        SampleInfoTypeLib
+        RTIConnextDDS::cpp2_api
+        RTIConnextDDS::routing_service_infrastructure
+        ${CONNEXTDDS_EXTERNAL_LIBS}
 )
 
 target_include_directories(
-    McapStorageCommon
+    PluginCommon
     PUBLIC
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<BUILD_INTERFACE:$<TARGET_PROPERTY:McapReader,INTERFACE_INCLUDE_DIRECTORIES>>"
-    "$<BUILD_INTERFACE:$<TARGET_PROPERTY:McapWriter,INTERFACE_INCLUDE_DIRECTORIES>>"
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
 target_compile_features(
-    McapStorageCommon
+    PluginCommon
     PUBLIC
         cxx_std_17
 )
 
 target_compile_options(
-    McapStorageCommon
+    PluginCommon
     PUBLIC
       -Wall -Wextra -Wpedantic -fPIC
 )
@@ -101,23 +120,21 @@ target_compile_options(
 add_library(
     McapStorageRecord
     SHARED
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/McapStorageWriter.cxx"
+        ${CMAKE_CURRENT_SOURCE_DIR}/McapWriter.cxx
 )
 
 target_link_libraries(
     McapStorageRecord
-    McapWriter
-    McapStorageCommon
+        PluginCommon
 )
 
 target_include_directories(
     McapStorageRecord
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
 # Shared library: McapStorageReplay
@@ -125,23 +142,21 @@ target_include_directories(
 add_library(
     McapStorageReplay
     SHARED
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/rti/recording/storage/mcap_plugin/McapStorageReader.cxx"
+        ${CMAKE_CURRENT_SOURCE_DIR}/McapReader.cxx
 )
 
 target_link_libraries(
     McapStorageReplay
-    McapReader
-    McapStorageCommon
+        PluginCommon
 )
 
 target_include_directories(
     McapStorageReplay
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
 
@@ -150,5 +165,26 @@ install(
     TARGETS
         McapStorageRecord
         McapStorageReplay
-    LIBRARY DESTINATION lib
+    CONFIGURATIONS Debug
+    LIBRARY DESTINATION debug/lib
+)
+
+set_target_properties(
+    McapStorageRecord
+    PROPERTIES
+        OUTPUT_NAME rtirecordingstoragemcaprecord
+)
+
+set_target_properties(
+    McapStorageReplay
+    PROPERTIES
+        OUTPUT_NAME rtirecordingstoragemcapreplay
+)
+
+install(
+    TARGETS
+        McapStorageRecord
+        McapStorageReplay
+    CONFIGURATIONS Release
+    LIBRARY DESTINATION release/lib
 )

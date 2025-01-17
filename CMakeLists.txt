@@ -10,7 +10,7 @@
 #  use or inability to use the software.
 #
 cmake_minimum_required(VERSION 3.11)
-project(McapStoragePlugin)
+project(RTIStoragePluginMcap)
 
 
 # CMAKE Build Type default = Release
@@ -37,26 +37,16 @@ find_package(
     REQUIRED
     COMPONENTS
         core
-        routing_service
         recording_service
 )
 
 
-# update git submodules
-execute_process(
-    COMMAND git submodule update --init --recursive
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    RESULT_VARIABLE result
-    OUTPUT_VARIABLE output
-    ERROR_VARIABLE error
-)
-if(NOT result EQUAL 0)
-    message(FATAL_ERROR "Script failed with error: ${error}")
-else()
-    message(STATUS "git submodule update: ${output}")
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "$ENV{NDDSHOME}/third_party/rtirecordingplugins/$ENV{CONNEXTDDS_ARCH}")
 endif()
 
-
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mcap_implementation")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mcap")
+
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/plugin")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
