@@ -8,6 +8,8 @@ This plugin uses the [RTI Recording Service Storage API](https://community.rti.c
 * [MCAP C++ v1.4.1](https://github.com/foxglove/mcap/tree/releases/cpp/v1.4.1)
 * [CMake 3.11+](https://cmake.org/cmake/help/v3.11/)
 
+*If an existing installation of MCAP C++ is not found with CMake's FindPackage, it will be retrieved and built locally within the build step/directory.*
+
 ### Optional
 
 * [LZ4 v1.9.4](https://github.com/lz4/lz4/releases/tag/v1.9.4) (for compression)
@@ -66,9 +68,15 @@ cmake --install .
 
 ## Known Limitations
 
+### MCAP only supports DDS-IDL datatype definitions
+
+MCAP does not support DDS-XML datatype definitions, which allows for more dynamic (de)serialization of discovered types at runtime. Connext does not support interpretting IDL datatype definitions as a string at runtime, which is how it is stored in MCAP Schemas.
+
+As a workaround, the plugin stores the DDS-XML type as a key-value string (with key: `"dds.xml_type"`) in the Channel metadata. When replaying, if RTI Replay Service does not find the corresponding metadata in the recorded Channel, it can still use types defined and loaded via XML (using the `-cfgFile` option, `NDDS_QOS_PROFILES`, or via the default locations).
+
 ### Datatype inheritance is not supported in Foxglove
 
-Inheritance is not supported in datatype definitions by the Foxglove MCAP implementation (as of [v1.4.1](https://github.com/foxglove/mcap/tree/releases/cpp/v1.4.1)). This should not affect the ability to record and replay using RTI Recording Service. However, Foxglove MCAP applications will be unable to deserialize stored data.
+Inheritance is not supported in datatype definitions by the Foxglove MCAP implementation (as of [v1.4.1](https://github.com/foxglove/mcap/tree/releases/cpp/v1.4.1)).
 
 For example, the following type definition for `Derived` is not supported by Foxglove Studio and MCAP CLI.
 
@@ -81,6 +89,8 @@ struct Derived : Base {
     long b;
 };
 ```
+
+This does not affect the ability to record and replay using RTI Recording Service. However, Foxglove MCAP applications will be unable to deserialize stored data.
 
 ### Replaying by source timestamp is not supported
 
@@ -110,3 +120,20 @@ This is enough metadata to replay data minimally. However, to encapsulate additi
 This storage plugin allows for recording (and replaying, if found) a parallel Channel of CDR-serialized SampleInfo for each DDS Sample recorded. This should allow complete functionality expected when using `<publish_with_original_info>` set to `true`.
 
 To record this parallel metadata channel, set `rti.recording.storage.mcap.info_file` plugin property in both the Recording and Replaying XML configuration files.
+
+### RTI Recording Service Storage API does not support SRO/Pass Through
+
+RTI Recording Service does not support "Simple-Route Optimization", "Fast-Forwarding", or "Pass-Through" mode. This is a mode in which Recording Service passes a serialized sample to the storage plugin, and Replay Service accepts a serialized sample from the storage plugin. This would be well suited for MCAP since MCAP is storing the data in CDR-serialized format.
+
+For now, data received by RTI Recording Service is deserialized, before being re-serialized into MCAP storage. Data replayed by RTI Replay Service is re-serialized as it is read from MCAP storage and before it is sent over DDS.
+
+## Future Improvements
+
+| Improvement   | Description
+| -----------   | -----------
+| Expose [`McapWriterOptions`](https://mcap.dev/docs/cpp/r832FE362A16BB6E8) as configuraable properties. | `chunkSize`, `enableDataCRC`
+| Store slimmer `SampleInfo` data. | Store only: `valid`, `source_timestamp`, `reception_timestamp`, `original_publication_virtual_guid`, `original_publication_virtual_sequence_number` to still capture adequete metadata for `<publish_with_original_info>` on replay.
+| Better Domain ID enforcement on replay. | Enable a boolean property to enable a per-message check on replay to validate domain ID. Otherwise requires update to the Storage API.
+| More efficient CDR (de)serialization. | Use `get_cdr_buffer()` / `set_cdr_buffer()` APIs once supported in RTI Recording Service Storage API.
+| Include example for [CompressedVideo.idl](https://github.com/foxglove/schemas/blob/main/schemas/omgidl/foxglove/CompressedVideo.idl). | Demonstrate compressed video recording. Can potentially use modified [RTI GStreamer Plugin](https://github.com/rticommunity/rticonnextdds-usecases/tree/master/VideoData).
+| Expand tests. | Test usage of actual RTI Recording/Replay Service binaries. Test record/replay of specific `SampleInfo` fields.
