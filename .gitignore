@@ -7,10 +7,10 @@
 **/.pytest_cache
 **/__init__.py
 
+lib/
+bin/
+example/
+config/
 data/*
-lib/*
-bin/*
-example/*
-config/*
 
-test/data
+test/data/*

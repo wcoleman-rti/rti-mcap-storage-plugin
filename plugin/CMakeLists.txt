@@ -10,7 +10,7 @@
 #  use or inability to use the software.
 #
 cmake_minimum_required(VERSION 3.11)
-project(RTIStoragePluginMcap::Src)
+project(RTIStoragePluginMcap::Plugin)
 
 # Object library: SampleInfoType
 #   Contains definitions and methods for (de)serializing DDS SampleInfo

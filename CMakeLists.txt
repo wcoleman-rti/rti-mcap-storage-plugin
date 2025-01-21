@@ -12,13 +12,11 @@
 cmake_minimum_required(VERSION 3.11)
 project(RTIStoragePluginMcap)
 
-
 # CMAKE Build Type default = Release
 if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
   if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
-    set(msg "Defaulting CMAKE_BUILD_TYPE to Release")
-    message(WARNING ${msg})
+    message(WARNING "Defaulting CMAKE_BUILD_TYPE to ${CMAKE_BUILD_TYPE}")
   endif()
 endif()
 set(CMAKE_DEBUG_POSTFIX d)
@@ -42,11 +40,11 @@ find_package(
 
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "$ENV{NDDSHOME}/third_party/rtirecordingplugins/$ENV{CONNEXTDDS_ARCH}")
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "$ENV{NDDSHOME}/third_party/rti/$ENV{CONNEXTDDS_ARCH}")
+  message(WARNING "Defaulting CMAKE_INSTALL_PREFIX to ${CMAKE_INSTALL_PREFIX}")
 endif()
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mcap")
-
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/plugin")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")

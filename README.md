@@ -8,7 +8,7 @@ This plugin uses the [RTI Recording Service Storage API](https://community.rti.c
 * [MCAP C++ v1.4.1](https://github.com/foxglove/mcap/tree/releases/cpp/v1.4.1)
 * [CMake 3.11+](https://cmake.org/cmake/help/v3.11/)
 
-*If an existing installation of MCAP C++ is not found with CMake's FindPackage, it will be retrieved and built locally within the build step/directory.*
+*If an existing installation of MCAP C++ is not found with CMake's FindPackage, it will be retrieved during the configuration step and built locally under the build directory.*
 
 ### Optional
 
@@ -32,7 +32,7 @@ cmake --build .
 cmake --install .
 ```
 
-*By default, libraries will be installed to: `$NDDSHOME/third_party/rtirecordingplugins/$CONNEXTDDS_ARCH/<release/debug>/lib`*
+*By default, libraries will be installed to: `$NDDSHOME/third_party/rti/$CONNEXTDDS_ARCH/<release/debug>/lib`*
 
 ## Usage
 
@@ -45,26 +45,92 @@ cmake --install .
 2. If needed, set LD_LIBRARY_PATH to find the MCAP Storage Plugin libraries.
 
     ```sh
-    export LD_LIBRARY_PATH=$NDDSHOME/third_party/rtirecordingplugins/$CONNEXTDDS_ARCH/release/lib:LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=$NDDSHOME/third_party/rti/$CONNEXTDDS_ARCH/release/lib:$LD_LIBRARY_PATH
     ```
 
     Or if you have installed libraries to another directory:
 
     ```sh
-    export LD_LIBRARY_PATH=<install_directory>/lib:LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=<install_directory>/lib:$LD_LIBRARY_PATH
     ```
 
-3. Run Recording Service
+    Or if you are testing and have built, but not installed, the libraries:
+
+    ```sh
+    export LD_LIBRARY_PATH=./build-release/plugin:$LD_LIBRARY_PATH
+    ```
+
+3. Run.
+
+    RTI Recording Service:
 
     ```sh
     $NDDSHOME/bin/rtirecordingservice -cfgFile ./config/McapRecorder.xml -cfgName mcap
     ```
 
-4. Run Replay Service
+    RTI Replay Service:
 
     ```sh
     $NDDSHOME/bin/rtireplayservice -cfgFile ./config/McapReplayer.xml -cfgName mcap
     ```
+
+## Configuration
+
+This storage plugin is configured in RTI Recording/Replay Service XML configuration in a [`<plugin_library>`](https://community.rti.com/static/documentation/connext-dds/7.3.0/doc/manuals/connext_dds_professional/services/recording_service/common/plugin_management.html#configuration) tag under `<dds>`, and a [`<plugin>`](https://community.rti.com/static/documentation/connext-dds/7.3.0/doc/manuals/connext_dds_professional/services/recording_service/recorder/record_configuration.html#plugin) tag, under `<storage>`.
+
+Example XML configurations can be found in [./config](./config/).
+
+To configure RTI Recording Service to use the MCAP Recording Storage library:
+
+```xml
+<plugin_library name="StorageLibrary">
+    <storage_plugin name="McapPlugin">
+        <dll>rtirecordingstoragemcaprecord</dll>
+        <create_function>McapFileWriter_get_storage_writer</create_function>
+    </storage_plugin>
+</plugin_library>
+```
+
+To configure RTI Replay Service to use the MCAP Replay Storage library:
+
+```xml
+<plugin_library name="StorageLibrary">
+    <storage_plugin name="McapPlugin">
+        <dll>rtirecordingstoragemcapreplay</dll>
+        <create_function>McapFileReader_get_storage_reader</create_function>
+    </storage_plugin>
+</plugin_library>
+```
+
+For both RTI Recording and RTI Replay Service, configure the storage plugin properties:
+
+```xml
+<recording_service name="mcap">
+    <storage>
+        <plugin plugin_name="StorageLibrary::McapPlugin">
+            <property>
+                <value>
+                    <element>
+                        <name>rti.recording.storage.mcap.data_file</name>
+                        <value>path/to/data.mcap</value>
+                    </element>
+                    <!-- add more properties here... -->
+                </value>
+            </property>
+        </plugin>
+    </storage>
+</recording_service>
+```
+
+### Properties
+
+| Property  | Required? | Description
+| ---       | ---       | ---
+| `rti.recording.storage.mcap.data_file` | Yes | Path to MCAP data file.
+| `rti.recording.storage.mcap.info_file` | No | Path to MCAP metadata file. Can be the same or different file from MCAP data file. If not set, metadata will not be recorded.
+| `rti.recording.storage.mcap.logging.log_level` | No | Logging level. Choose from: `0` (SILENT), `1` (FATAL), `2` (ERROR), `3` (WARN), `4` (INFO), `5` (DEBUG). Default: `3` (WARN).
+| `rti.recording.storage.mcap.compression.kind` | No | MCAP compression kind. Only for Recording. Choose from: `None`, `Lz4`, `Zstd`. Default: `Lz4`. See [`mcap::Compression`](https://mcap.dev/docs/cpp/e6BA969F2E9B40D6E).
+| `rti.recording.storage.mcap.compression.level` | No | MCAP compression kind. Only for Recording, if compression kind is not `None`. Choose from: `Fastest`, `Fast`, `Default`, `Slow`, `Slowest`. Default: `Default`. See [`mcap::CompressionLevel`](https://mcap.dev/docs/cpp/e3B3464E30CB968FB).
 
 ## Known Limitations
 
