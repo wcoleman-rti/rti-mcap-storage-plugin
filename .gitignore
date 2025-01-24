@@ -10,7 +10,6 @@
 lib/
 bin/
 example/
-config/
 data/*
 
 test/data/*
