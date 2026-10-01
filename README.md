@@ -199,14 +199,18 @@ Release runs per version):
 
 | Metric | Before | After |
 |---|---:|---:|
-| Plugin recording | 41.2-44.6 ms | 20.5-32.1 ms |
-| Plugin replay | 707.9-714.4 ms | 27.6-34.5 ms |
-| Aggregate replay open/seek | 6.3-6.8 ms | 2.3-3.6 ms |
-| Peak process RSS | approximately 38,900 KiB | 38,996-39,300 KiB |
+| Plugin recording | 41.2-44.6 ms | 25.4-33.6 ms |
+| Plugin replay | 707.9-714.4 ms | 31.9-45.5 ms |
+| Aggregate replay open/seek | 6.3-6.8 ms | 3.0-4.6 ms |
+| Peak process RSS | approximately 38,900 KiB | 39,156-39,352 KiB |
 
 The plugin archive remained 12,251,321 bytes. Replay's main improvement comes
 from bounded reuse of returned normal DynamicData, rather than changing MCAP
 index semantics or exposing borrowed CDR buffers.
+
+The after measurements use the final reorganized build. Scheduling and other
+work on the host affect timings; these figures describe this workload, not
+guaranteed performance for arbitrary types or batch sizes.
 
 ## Indexing, Ownership, and Error Contracts
 
