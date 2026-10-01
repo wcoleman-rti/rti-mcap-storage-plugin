@@ -1,7 +1,0 @@
-#include "dds_rtf2_dcps.idl"
-
-module rti { module recording { module storage {
-
-    struct SampleInfo : DDSMonitoring::SampleInfo {};
-
-};};}; // rti::recording::storage

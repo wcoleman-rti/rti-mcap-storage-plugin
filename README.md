@@ -1,205 +1,249 @@
 # RTI Recording Service MCAP Storage Plugin
 
-This plugin uses the [RTI Recording Service Storage API](https://community.rti.com/static/documentation/connext-dds/7.3.0/doc/manuals/connext_dds_professional/services/recording_service/recorder/record_tutorials.html#plugging-in-custom-storage) to implement the ability to record to, and replay from, [MCAP file format](https://mcap.dev/spec).
+## Quick Start
 
-## Dependencies
+Requirements: RTI Connext DDS 7.7.0 (with Recording Service), CMake 3.20+, and a C++17 compiler. Set `NDDSHOME` and source the environment script for your Connext architecture.
 
-* [RTI Connext Professional 7.3.0](https://community.rti.com/static/documentation/connext-dds/7.3.0/doc/manuals/connext_dds_professional/installation_guide/installation_guide/Installation_Title.htm)
-* [MCAP C++ v1.4.1](https://github.com/foxglove/mcap/tree/releases/cpp/v1.4.1)
-* [CMake 3.11+](https://cmake.org/cmake/help/v3.11/)
-
-*If an existing installation of MCAP C++ is not found with CMake's FindPackage, it will be retrieved during the configuration step and built locally under the build directory.*
-
-### Optional
-
-* [LZ4 v1.9.4](https://github.com/lz4/lz4/releases/tag/v1.9.4) (for compression)
-* [ZSTD v1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) (for compression)
-
-## Building
-
-```shell
-source <path/to/connext/installation>/resource/scripts/rtisetenv_<architecture>.bash
-
-mkdir build-release
-cd build-release
-cmake [-DCMAKE_BUILD_TYPE=Debug] ..
-cmake --build .
+```sh
+source "$NDDSHOME/resource/scripts/rtisetenv_x64Linux4gcc8.5.0.bash"
+cmake -B build
+cmake --build build --parallel
+LD_LIBRARY_PATH="$PWD/build/plugins/storage${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    "$NDDSHOME/bin/rtirecordingservice" \
+    -cfgFile resources/config/McapRecorder.xml -cfgName mcap
 ```
 
-## Installing
+The provided recorder configuration writes to `build/data.mcap` and stores DDS samples only. Start a publisher using the same domain and topic definitions to populate the archive. To replay the archive, use:
 
-```shell
-cmake --install .
+```sh
+LD_LIBRARY_PATH="$PWD/build/plugins/storage${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    "$NDDSHOME/bin/rtireplayservice" \
+    -cfgFile resources/config/McapReplayer.xml -cfgName mcap
 ```
 
-*By default, libraries will be installed to: `$NDDSHOME/third_party/rti/$CONNEXTDDS_ARCH/<release/debug>/lib`*
+## Components
 
-## Usage
+- **Core** (`rti::mcap::core`): DDS topic-type to MCAP schema/channel and sample conversion, including the CDR-backed `DynamicData` fast path and SampleInfo mapping. Depends on Connext DDS core and MCAP headers, not file I/O or service libraries.
+- **File** (`rti::mcap::file`): checked MCAP file reading/writing, summaries, and indexed message views. Depends on MCAP C++ v2.1.3, not Connext or Core.
+- **Storage plugins** (`rti::mcap::storage::record` and `rti::mcap::storage::replay`): Recording/Replay Service adapters using both SDK components. Both use C++ namespace `rti::mcap::storage`. The services own DDS endpoints.
 
-1. Configure the Connext environment.
+Core and File have matching C++ namespaces and CMake target names. These are
+project-provided RTI extensions, not APIs shipped with Connext. Upstream MCAP
+types remain in the global `::mcap` namespace.
 
-    ```sh
-    source <path/to/connext/installation>/resource/scripts/rtisetenv_<architecture>.bash
-    ```
-
-2. If needed, set LD_LIBRARY_PATH to find the MCAP Storage Plugin libraries.
-
-    ```sh
-    export LD_LIBRARY_PATH=$NDDSHOME/third_party/rti/$CONNEXTDDS_ARCH/release/lib:$LD_LIBRARY_PATH
-    ```
-
-    Or if you have installed libraries to another directory:
-
-    ```sh
-    export LD_LIBRARY_PATH=<install_directory>/lib:$LD_LIBRARY_PATH
-    ```
-
-    Or if you are testing and have built, but not installed, the libraries:
-
-    ```sh
-    export LD_LIBRARY_PATH=./build-release/plugin:$LD_LIBRARY_PATH
-    ```
-
-3. Run.
-
-    RTI Recording Service:
-
-    ```sh
-    $NDDSHOME/bin/rtirecordingservice -cfgFile ./config/McapRecorder.xml -cfgName mcap
-    ```
-
-    RTI Replay Service:
-
-    ```sh
-    $NDDSHOME/bin/rtireplayservice -cfgFile ./config/McapReplayer.xml -cfgName mcap
-    ```
-
-## Configuration
-
-This storage plugin is configured in RTI Recording/Replay Service XML configuration in a [`<plugin_library>`](https://community.rti.com/static/documentation/connext-dds/7.3.0/doc/manuals/connext_dds_professional/services/recording_service/common/plugin_management.html#configuration) tag under `<dds>`, and a [`<plugin>`](https://community.rti.com/static/documentation/connext-dds/7.3.0/doc/manuals/connext_dds_professional/services/recording_service/recorder/record_configuration.html#plugin) tag, under `<storage>`.
-
-Example XML configurations can be found in [./config](./config/).
-
-To configure RTI Recording Service to use the MCAP Recording Storage library:
-
-```xml
-<plugin_library name="StorageLibrary">
-    <storage_plugin name="McapPlugin">
-        <dll>rtirecordingstoragemcaprecord</dll>
-        <create_function>McapFileWriter_get_storage_writer</create_function>
-    </storage_plugin>
-</plugin_library>
+```text
+sdk/core/                   Public headers: include/rti/mcap/core/
+sdk/file/                   Public headers: include/rti/mcap/file/
+plugins/storage/            Both adapters and their private headers
+tests/                      Component tests, support, test IDL, package consumers
+benchmarks/                 Independently enabled benchmark
+resources/cmake/            Build helpers and package templates
+resources/config/           Recording/Replay Service XML configurations
+resources/dependencies/     Pinned dependency integration; downloads stay in build/
 ```
 
-To configure RTI Replay Service to use the MCAP Replay Storage library:
+The core defaults to `dds::core::xtypes::DynamicData` while allowing generated DDS topic types as template arguments. MCAP compression is disabled by default; enable LZ4 or Zstd with `RTI_MCAP_ENABLE_LZ4` or `RTI_MCAP_ENABLE_ZSTD` when their development libraries are installed. Compression dependencies are discovered only when File is built or consumed.
 
-```xml
-<plugin_library name="StorageLibrary">
-    <storage_plugin name="McapPlugin">
-        <dll>rtirecordingstoragemcapreplay</dll>
-        <create_function>McapFileReader_get_storage_reader</create_function>
-    </storage_plugin>
-</plugin_library>
+## Building and Consuming Components
+
+Standalone builds enable Core, File, Storage, and project tests by default.
+The independent build switches are `RTI_MCAP_BUILD_CORE`,
+`RTI_MCAP_BUILD_FILE`, and `RTI_MCAP_BUILD_STORAGE`; Storage requires both SDK
+components. Tests, benchmarks, and storage plugins default off when this
+project is included through `add_subdirectory` or FetchContent. Parent
+build-type, `BUILD_TESTING`, and shared/static preferences are not overridden.
+
+Core only (does not build the MCAP implementation):
+
+```sh
+cmake -S . -B build/core-only -DRTI_MCAP_BUILD_STORAGE=OFF \
+    -DRTI_MCAP_BUILD_FILE=OFF -DRTI_MCAP_BUILD_TESTS=OFF
+cmake --build build/core-only --parallel 2
 ```
 
-For both RTI Recording and RTI Replay Service, configure the storage plugin properties:
+File only (does not require `NDDSHOME`, Connext, or DDS code generation):
 
-```xml
-<recording_service name="mcap">
-    <storage>
-        <plugin plugin_name="StorageLibrary::McapPlugin">
-            <property>
-                <value>
-                    <element>
-                        <name>rti.recording.storage.mcap.data_file</name>
-                        <value>path/to/data.mcap</value>
-                    </element>
-                    <!-- add more properties here... -->
-                </value>
-            </property>
-        </plugin>
-    </storage>
-</recording_service>
+```sh
+cmake -S . -B build/file-only -DRTI_MCAP_BUILD_CORE=OFF \
+    -DRTI_MCAP_BUILD_STORAGE=OFF -DRTI_MCAP_BUILD_TESTS=OFF
+cmake --build build/file-only --parallel 2
 ```
 
-### Properties
+Install the configured components with `cmake --install build --prefix /path/to/prefix`.
+An external project can then use:
 
-| Property  | Required? | Description
-| ---       | ---       | ---
-| `rti.recording.storage.mcap.data_file` | Yes | Path to MCAP data file.
-| `rti.recording.storage.mcap.info_file` | No | Path to MCAP metadata file. Can be the same or different file from MCAP data file. If not set, metadata will not be recorded.
-| `rti.recording.storage.mcap.logging.log_level` | No | Logging level. Choose from: `0` (SILENT), `1` (FATAL), `2` (ERROR), `3` (WARN), `4` (INFO), `5` (DEBUG). Default: `3` (WARN).
-| `rti.recording.storage.mcap.compression.kind` | No | MCAP compression kind. Only for Recording. Choose from: `None`, `Lz4`, `Zstd`. Default: `Lz4`. See [`mcap::Compression`](https://mcap.dev/docs/cpp/e6BA969F2E9B40D6E).
-| `rti.recording.storage.mcap.compression.level` | No | MCAP compression kind. Only for Recording, if compression kind is not `None`. Choose from: `Fastest`, `Fast`, `Default`, `Slow`, `Slowest`. Default: `Default`. See [`mcap::CompressionLevel`](https://mcap.dev/docs/cpp/e3B3464E30CB968FB).
-
-## Known Limitations
-
-### MCAP only supports DDS-IDL datatype definitions
-
-MCAP does not support DDS-XML datatype definitions, which allows for more dynamic (de)serialization of discovered types at runtime. Connext does not support interpretting IDL datatype definitions as a string at runtime, which is how it is stored in MCAP Schemas.
-
-As a workaround, the plugin stores the DDS-XML type as a key-value string (with key: `"dds.xml_type"`) in the Channel metadata. When replaying, if RTI Replay Service does not find the corresponding metadata in the recorded Channel, it can still use types defined and loaded via XML (using the `-cfgFile` option, `NDDS_QOS_PROFILES`, or via the default locations).
-
-### Datatype inheritance is not supported in Foxglove
-
-Inheritance is not supported in datatype definitions by the Foxglove MCAP implementation (as of [v1.4.1](https://github.com/foxglove/mcap/tree/releases/cpp/v1.4.1)).
-
-For example, the following type definition for `Derived` is not supported by Foxglove Studio and MCAP CLI.
-
-```c
-struct Base {
-    long a;
-};
-
-struct Derived : Base {
-    long b;
-};
+```cmake
+find_package(RTIMcap 1 CONFIG REQUIRED COMPONENTS core)
+add_executable(application main.cpp)
+target_link_libraries(application PRIVATE rti::mcap::core)
 ```
 
-This does not affect the ability to record and replay using RTI Recording Service. However, Foxglove MCAP applications will be unable to deserialize stored data.
+Set `CMAKE_PREFIX_PATH` to that installation. Components are `core`, `file`,
+and `storage`; requesting `storage` loads both plugin targets and their
+dependencies. Omitting components loads all installed components. Required
+unknown or uninstalled components fail explicitly. Core consumers need Connext
+7.7.0 discovery (normally `NDDSHOME`); File consumers do not. Installs are
+relocatable and do not expose plugin-private headers.
 
-### Replaying by source timestamp is not supported
+For source consumption:
 
-Foxglove's C++ MCAP API does not support indexing stored data by publish (source) time. See [https://github.com/foxglove/mcap/issues/287](https://github.com/foxglove/mcap/issues/287) for more details.
+```cmake
+set(RTI_MCAP_BUILD_FILE OFF CACHE BOOL "")
+add_subdirectory(path/to/rti-mcap)
+target_link_libraries(application PRIVATE rti::mcap::core)
+```
 
-### MCAP does not support DDS keys or instances
+Public includes are `<rti/mcap/core/TopicConverter.hpp>`,
+`<rti/mcap/core/SampleMetadata.hpp>`, and `<rti/mcap/file/File.hpp>`.
+Service-loaded plugin binaries retain the `debug/lib` and `release/lib`
+installation locations and their existing filenames.
 
-The MCAP standard has no concept of an instance within a Channel (DDS Topic equivalent). This does not affect the ability to store and replay data. It does prevent the ability to implement instance-specific functionality efficiently (e.g. ["state of the world"](https://community.rti.com/static/documentation/connext-dds/current/doc/manuals/connext_dds_professional/services/recording_service/replay/replay_usage.html#section-using-replay-instance-history)).
+### Clean API Migration
 
-### MCAP does not support Domains
+This is a breaking source/build API rename; no legacy aliases or forwarding
+headers are provided. Reconfigure existing builds with the new options:
 
-MCAP does support the concept of Domains.
+| Previous | Replacement |
+|---|---|
+| C++ `dds_mcap` | `rti::mcap::core` |
+| C++ `dds_mcap::archive` | `rti::mcap::file` |
+| C++ `rti::recording::storage::mcap` | `rti::mcap::storage` |
+| CMake `DdsMcap::Core` / `DdsMcap::Archive` | `rti::mcap::core` / `rti::mcap::file` |
+| `DDS_MCAP_BUILD_ARCHIVE` | `RTI_MCAP_BUILD_FILE` |
+| `DDS_MCAP_BUILD_PLUGINS` | `RTI_MCAP_BUILD_STORAGE` |
+| `DDS_MCAP_BUILD_BENCHMARKS` | `RTI_MCAP_BUILD_BENCHMARKS` |
+| `DDS_MCAP_ENABLE_{LZ4,ZSTD,SANITIZERS}` | `RTI_MCAP_ENABLE_{LZ4,ZSTD,SANITIZERS}` |
+| Project test selection through `BUILD_TESTING` | `RTI_MCAP_BUILD_TESTS` |
 
-There have been mitigations to cover most edge cases to indicate Domain ID in MCAP Channel metadata. However, it is possible two Topics with equivalent names may have data replayed on incorrect Domain IDs.
+Plugin C entry points, shared-library filenames, XML property keys, channel
+names, and the v1 metadata wire format remain unchanged. XML configuration
+files now live under `resources/config/`; update command-line paths accordingly.
 
-### MCAP does not support Sample Metadata (e.g. DDS SampleInfo)
+## SampleInfo Metadata
 
-MCAP only provides a limited set of metadata for each Message recorded:
+Recording and replay store sample data only by default. To include DDS SampleInfo, add the optional `rti.recording.storage.mcap.info_file` property to both plugin property sets in the XML configuration and set it to the same path as `rti.recording.storage.mcap.data_file`. The metadata channel is then stored in the same MCAP archive as the data channels. The project-owned metadata encoding is versioned; replay rejects unknown versions and mismatched data/metadata message identifiers.
 
-* sequence number
-* publish time
-* log time
-* channel
+## Versions and Tests
 
-This is enough metadata to replay data minimally. However, to encapsulate additional metadata and replicate such events as instance states or virtual GUIDs, more metadata must be captured.
+- RTI Connext DDS 7.7.0
+- MCAP C++ v2.1.3
+- C++17 and CMake 3.20+
 
-This storage plugin allows for recording (and replaying, if found) a parallel Channel of CDR-serialized SampleInfo for each DDS Sample recorded. This should allow complete functionality expected when using `<publish_with_original_info>` set to `true`.
+Run the focused tests with:
 
-To record this parallel metadata channel, set `rti.recording.storage.mcap.info_file` plugin property in both the Recording and Replaying XML configuration files.
+```sh
+cmake --preset debug
+cmake --build --preset debug --parallel 2
+ctest --preset debug
+```
 
-### RTI Recording Service Storage API does not support SRO/Pass Through
+Equivalent `release` and `sanitizers` presets are provided. Sanitizers use
+ASan and UBSan with GCC or Clang; the proprietary Connext libraries are not
+instrumented. Presets require a Unix Makefiles environment; the regular
+`cmake -S . -B build` workflow remains available with other generators.
+Tests use pinned doctest v2.4.12 and CTest, with assertions active in Release.
+The first test-enabled configure downloads doctest; production builds with
+`RTI_MCAP_BUILD_TESTS=OFF` do not fetch it.
 
-RTI Recording Service does not support "Simple-Route Optimization", "Fast-Forwarding", or "Pass-Through" mode. This is a mode in which Recording Service passes a serialized sample to the storage plugin, and Replay Service accepts a serialized sample from the storage plugin. This would be well suited for MCAP since MCAP is storing the data in CDR-serialized format.
+For an existing configured build:
 
-For now, data received by RTI Recording Service is deserialized, before being re-serialized into MCAP storage. Data replayed by RTI Replay Service is re-serialized as it is read from MCAP storage and before it is sent over DDS.
+```sh
+ctest --test-dir build --output-on-failure
+```
 
-## Future Improvements
+Tests exercise this project's converters, metadata codec, checked archive
+adapter, configuration parsing, and recording/replay ownership and selectors.
+They do not independently validate DDS transport/QoS or MCAP index/compression
+algorithms. Generated test types and the framework main are compiled once;
+plugin tests link the actual recording and replay libraries.
 
-| Improvement   | Description
-| -----------   | -----------
-| Expose [`McapWriterOptions`](https://mcap.dev/docs/cpp/r832FE362A16BB6E8) as configuraable properties. | `chunkSize`, `enableDataCRC`
-| Store slimmer `SampleInfo` data. | Store only: `valid`, `source_timestamp`, `reception_timestamp`, `original_publication_virtual_guid`, `original_publication_virtual_sequence_number` to still capture adequete metadata for `<publish_with_original_info>` on replay.
-| Better Domain ID enforcement on replay. | Enable a boolean property to enable a per-message check on replay to validate domain ID. Otherwise requires update to the Storage API.
-| More efficient CDR (de)serialization. | Use `get_cdr_buffer()` / `set_cdr_buffer()` APIs once supported in RTI Recording Service Storage API.
-| Include example for [CompressedVideo.idl](https://github.com/foxglove/schemas/blob/main/schemas/omgidl/foxglove/CompressedVideo.idl). | Demonstrate compressed video recording. Can potentially use modified [RTI GStreamer Plugin](https://github.com/rticommunity/rticonnextdds-usecases/tree/master/VideoData).
-| Expand tests. | Test usage of actual RTI Recording/Replay Service binaries. Test record/replay of specific `SampleInfo` fields.
+Installed-package smoke consumers live under `tests/packaging`. After installing
+to a staging prefix, exercise an independently configured consumer with:
+
+```sh
+cmake -S tests/packaging -B build/consumer -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH=/path/to/prefix -DRTI_MCAP_COMPONENT=core
+cmake --build build/consumer --parallel 2
+build/consumer/consumer
+```
+
+Use `file` for DDS-free consumption or `storage` to resolve plugin file
+locations. These checks validate this project's packaging, not dependency
+functionality.
+
+## Performance Benchmark
+
+The benchmark is opt-in, excluded from the default build, and is not a
+timing-based test gate:
+
+```sh
+cmake --preset release -DRTI_MCAP_BUILD_BENCHMARKS=ON
+cmake --build --preset release --target rti_mcap_benchmark --parallel 2
+build/release/benchmarks/rti_mcap_benchmark --samples 4000 --streams 4 \
+    --batch 32 --metadata
+# Indexed range replay: returns (4000 - 3000) * 4 samples.
+build/release/benchmarks/rti_mcap_benchmark --samples 4000 --streams 4 \
+    --batch 32 --metadata --start 3000
+```
+
+Omit `--metadata` for data-only recording/replay. Run `--help` for sample,
+payload, batch, stream, chunk-size, and compression options. Replay counts are
+checked before reporting results. Peak RSS includes dependencies and all
+benchmark phases, not just the plugin. Compare repeated runs in the same
+Release configuration rather than treating one measurement as a general
+speedup guarantee.
+
+Example before/after measurements on Linux with GCC 15.2 and Connext 7.7,
+using the command above (16,000 plugin samples, metadata enabled, three
+Release runs per version):
+
+| Metric | Before | After |
+|---|---:|---:|
+| Plugin recording | 41.2-44.6 ms | 25.4-33.6 ms |
+| Plugin replay | 707.9-714.4 ms | 31.9-45.5 ms |
+| Aggregate replay open/seek | 6.3-6.8 ms | 3.0-4.6 ms |
+| Peak process RSS | approximately 38,900 KiB | 39,156-39,352 KiB |
+
+The plugin archive remained 12,251,321 bytes. Replay's main improvement comes
+from bounded reuse of returned normal DynamicData, rather than changing MCAP
+index semantics or exposing borrowed CDR buffers.
+
+The after measurements use the final reorganized build. Scheduling and other
+work on the host affect timings; these figures describe this workload, not
+guaranteed performance for arbitrary types or batch sizes.
+
+## Indexing, Ownership, and Error Contracts
+
+- DDS reception time maps to MCAP `logTime`; source time maps to `publishTime`,
+  falling back to reception time when the source timestamp is invalid.
+  Standard MCAP indexes use log time and channel. The pinned MCAP version has
+  no released source-time or general secondary-index API. Source-time
+  sidecars/custom indexes remain future opt-in work.
+- Chunking, message/chunk indexes, summaries, and existing CRC defaults remain
+  enabled. Compression remains off by default. Benchmark chunk/compression
+  options tune its native archive-writing phase, not the plugin's defaults.
+- `NOT_READ` continues the stream cursor and ignores the selector's lower time
+  bound. `ANY` uses a fresh range view without consuming that cursor. DDS time
+  bounds are inclusive; the adapter safely translates the upper bound to MCAP's
+  exclusive end. Negative `max_samples` means unlimited. Unsupported READ and
+  instance-history selectors fail explicitly.
+- `finished()` describes whether the last read exhausted the configured stream
+  range, not just its requested batch or narrower selector range. `reset()`
+  restarts the sequential cursor and clears a latched read failure; it does
+  not invalidate outstanding loans.
+- Each returned batch owns normal, field-accessible DynamicData and SampleInfo
+  until its matching `return_loan()`. Returning another batch does not release
+  it. At most 32 returned normal DynamicData objects per stream are reused;
+  this is an idle-cache limit, not a read or outstanding-loan limit. Buffers
+  grow with actual data instead of eagerly reserving the type's maximum bound.
+  CDR-associated replay is not enabled.
+- Converter message views and MCAP iterator payloads are borrowed. Consume or
+  copy them before reusing converter scratch/input storage or advancing the
+  iterator; keep the archive reader open while views and iterators are in use.
+  Recording consumes callback-owned CDR storage synchronously.
+- Numeric properties reject trailing text and negative unsigned values; path
+  properties preserve spaces. Fatal errors throw explicitly, not from a log
+  destructor. Write/read failures are reported and latched per stream.
+  Archive writes and close use checked output; destruction reports cleanup
+  failures without throwing. Metadata encoding remains version 1 (177 bytes),
+  with full DDS sequence numbers and invalid-data lifecycle events preserved.
